@@ -14,5 +14,5 @@ app.get("/:bottlesofantis", function(req,res){
 });
 
 app.listen(3000,function(){
-    console.log("Just the word, Sad");
+    console.log("Listening");
 })
