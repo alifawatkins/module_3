@@ -1,8 +1,0 @@
-<head>
-#title#
-</head>
-<body>
-<header>#message#</header>
-#image#
-#content#
-</body>
