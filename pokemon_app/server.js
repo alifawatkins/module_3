@@ -1,9 +1,14 @@
 const express = require("express");
+const pokemon = require("./models/pokemon");
 const app = express();
 const PORT = 3000;
 
 app.get("/", (req, res) => {
     res.send("<h1>Welcome to the Pokemon App!</h1>");
+});
+
+app.get("/pokemon/", (req, res) => {
+    res.send(pokemon);
 });
 
 app.listen(3000, () => {
