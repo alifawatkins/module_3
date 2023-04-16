@@ -3,12 +3,15 @@ const pokemon = require("./models/pokemon");
 const app = express();
 const PORT = 3000;
 
+app.set('view engine', 'jsx');
+app.engine('jsx', require('jsx-view-engine').createEngine());
+
 app.get("/", (req, res) => {
     res.send("<h1>Welcome to the Pokemon App!</h1>");
 });
 
-app.get("/pokemon/", (req, res) => {
-    res.send(pokemon);
+app.get("/pokemon", (req, res) => {
+    res.render("Index");
 });
 
 app.listen(3000, () => {
