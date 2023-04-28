@@ -1,11 +1,10 @@
 require('dotenv').config(); // call and configure your dotenv package
 const express = require('express');
 const mongoose = require('mongoose');
+const methodOverride = require('method-override');
 // Data
-const fruits = require('./models/fruits');
+// const fruits = require('./models/fruits');
 const Fruit = require('./models/Fruit');
-const veggies = require('./models/veggies');
-const Veggie = require('./models/Veggie');
 
 const app = express()
 const PORT = 3000;
@@ -22,6 +21,8 @@ app.use((req, res, next) => {
 })
 // parses the data from the request
 app.use(express.urlencoded({extended: false}))
+// override using a query value
+app.use(methodOverride('_method'))
 
 
 app.get('/', (req, res) => {
@@ -68,6 +69,58 @@ app.get('/fruits/new', (req, res) => {
 })
 
 
+//* Return the edit form
+app.get('/fruits/:id/edit', (req, res) => {
+   Fruit.findById(req.params.id, (error, foundFruit) => {
+    if (!error) {
+        res.render('fruits/Edit', {fruit: foundFruit})
+    } else {
+        res.send({msg: error.message})
+    }
+
+   })
+})
+
+
+//* Handle the edit form data
+app.put('/fruits/:id', (req, res) => {
+    if(req.body.readyToEat === 'on') {
+        req.body.readyToEat = true;
+    } else {
+        req.body.readyToEat = false;
+    }
+
+   Fruit.findByIdAndUpdate(req.params.id, req.body, {new: true} ,(error, updatedFruit) => {
+    // res.send(updatedFruit)
+    res.redirect(`/fruits/${req.params.id}`)
+   })
+})
+
+
+//* Seed Route
+app.get('/fruits/seed', (req, res)=>{
+    Fruit.create([
+        {
+            name:'grapefruit',
+            color:'pink',
+            readyToEat:true
+        },
+        {
+            name:'grape',
+            color:'purple',
+            readyToEat:false
+        },
+        {
+            name:'avocado',
+            color:'green',
+            readyToEat:true
+        }
+    ], (err, data)=>{
+        res.redirect('/fruits');
+    })
+});
+
+
 /**
  * Show Route: (returns an single fruit)
  */
@@ -80,58 +133,18 @@ app.get('/fruits/:id', (req, res) => {
     })
 })
 
-/**
- * Index Route: (return a list of veggies)
- */
-app.get('/veggies', (req, res) => {
-    // res.send(veggies)
-    // res.render('veggies/Index', {veggies: veggies})
-    Veggie.find({}, (error, allVeggies) => {
-        res.render('veggies/Index', {veggies: allVeggies})
-    })
-})
 
-/**
- * POST method (accept data from the form)
- */
-app.post('/veggies', (req, res) => {
-    console.log(req.body);
-    //if checked, req.body.readyToEat is set to 'on'
-    if (req.body.readyToEat === 'on') {
-        req.body.readyToEat = true;
-    } else {
-        req.body.readyToEat = false;
-    }
-    // veggies.push(req.body)
-
-    Veggie.create(req.body, (error, createdVeggie) => {
-        // res.send(createdVeggie)
-        res.redirect('/veggies')
-    })
-
-})
-
-
-/**
- * New Route: (return a form to create a new veggie)
- */
-app.get('/veggies/new', (req, res) => {
-    res.render('veggies/New')
-})
-
-
-/**
- * Show Route: (returns an single veggie)
- */
-app.get('/veggies/:id', (req, res) => {
-    console.log(req.params);
-    Veggie.findById(req.params.id, (error, foundVeggie) => {
-        res.render('veggies/Show', {veggie: foundVeggie})
+//! DELETE FRUIT
+app.delete('/fruits/:id', (req, res) => {
+    Fruit.findByIdAndRemove(req.params.id, (error, deletedFruit) => {
+        // res.send(deletedFruit)
+        res.redirect('/fruits')
     })
 })
 
 // if none of the routes matches the request show 404 pg
 app.get('*', (req, res) => {
+    // res.redirect('/fruits')
     res.render('404')
 })
 
