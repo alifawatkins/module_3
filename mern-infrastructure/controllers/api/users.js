@@ -1,58 +1,57 @@
-//* Request handler Logic
 const User = require('../../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-
-//* /*-- Helper Functions --*/
-function createJWT(user) {
-    return jwt.sign({user}, process.env.SECRET, {expiresIn: '24h'});
-}
-
-async function create(req, res) {
-    // console.log('[From POST handler]', req.body)
-    try {
-        //* creating a new user
-        const user = await User.create(req.body);
-        console.log(user);
-
-        //* creating a new jwt
-        const token = createJWT(user);
-
-        res.json(token);
-        
-    } catch (error) {
-        console.log(error);
-        res.status(400).json(error)
-    }
-}
-
-
-async function login(req, res) {
-    try {
-        // find user in db
-      const user = await User.findOne({ email: req.body.email });
-      // check if we found an user
-      if (!user) throw new Error();
-      // compare the password to hashed password
-      const match = await bcrypt.compare(req.body.password, user.password);
-      // check is password matched
-      if (!match) throw new Error();
-      // send back a new token with the user data in the payload
-      res.json( createJWT(user) );
-    } catch {
-      res.status(400).json('Bad Credentials');
-    }
-  }
-
-
-async function checkToken(req, res) {
-    console.log(req.user);
-    res.json(req.exp)
-}
-
 
 module.exports = {
     create,
     login,
     checkToken
+};
+
+/*-- Helper Functions --*/
+
+function createJWT(user) {
+    return jwt.sign(
+      // data payload
+      { user },
+      process.env.SECRET,
+      { expiresIn: '24h' }
+    );
+}
+async function create(req, res) {
+    try {
+        // Add the user to the database
+        const user = await User.create(req.body);
+        // token will be a string
+        const token = createJWT(user);
+        // Yes, we can use res.json to send back just a string
+        // The client code needs to take this into consideration
+        res.status(200).json(token);
+    } catch (err) {
+        // Client will check for non-2xx status code
+        // 400 = Bad Request
+        res.status(400).json(err);
+    }
+}
+
+async function login(req, res) {
+    try {
+        // Add the user to the database
+        const user = await User.findOne({email: req.body.email});
+        if (!user) throw new Error();
+        const match = await bcrypt.compare(req.body.password, user.password);
+        if (!match) throw new Error();
+        // token will be a string
+        res.status(200).json(createJWT(user));
+    } catch(e) {
+        // Client will check for non-2xx status code
+        // 400 = Bad Request
+        res.status(400).json({msg: e.message, reason: 'Bad Credentials'});
+    }
+}
+
+function checkToken(req, res) {
+    // req.user will always be there for you when a token is sent
+    console.log('req.user', req.user);
+    res.json(req.exp);
 }
